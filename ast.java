@@ -557,6 +557,31 @@ class FctnDeclNode extends DeclNode {
         myBody = body;
     }
 
+
+    public void codeGen() {
+	preambleGen();
+	prologueGen();
+    }
+
+    private void preambleGen() {
+	Codegen.generate(".text");
+	if(myId.name().equals("main")) {
+	    Codegen.generate(".globl", "main");
+	    Codegen.genLabel("main");
+	}
+	else {
+	    Codegen.genLabel("_"+ myId.name());  
+	}
+    }
+
+    private void prologueGen() {
+	Codegen.genPush("$ra"); // Push return addr
+	Codegen.genPush("$fp"); // Push frame pointer
+	Codegen.generate("addu", "$fp", "8"); // Update fp to be right after saved AR data
+	Codegen.generate("subu", "$sp", "$sp", String.valueOf(myId.localsSize())); // Space for locals
+	
+    }
+    
     /***
      * nameAnalysis
      * Given a symbol table symTab, do:
