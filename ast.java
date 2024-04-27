@@ -255,6 +255,10 @@ class StmtListNode extends ASTnode {
         } 
     }
 
+    public void codeGen() {
+	
+    }
+
     // list of children (StmtNodes)
     private List<StmtNode> myStmts;
 }
@@ -383,7 +387,14 @@ class FctnBodyNode extends ASTnode {
      ***/
     public void typeCheck(Type retType) {
         myStmtList.typeCheck(retType);
-    }    
+    }
+
+    public void codeGen() {
+	Codegen.generate(".data");
+	myDeclList.codeGen();
+	Codegen.generate(".text");
+	myStmtList.codeGen();
+    }
     
     public void unparse(PrintWriter p, int indent) {
         myDeclList.unparse(p, indent);
@@ -561,12 +572,14 @@ class FctnDeclNode extends DeclNode {
     public void codeGen() {
 	preambleGen();
 	prologueGen();
+	myBody.codeGen();
+	epilogueGen();
     }
 
     private void preambleGen() {
 	Codegen.generate(".text");
 	if(myId.name().equals("main")) {
-	    Codegen.generate(".globl", "main");
+	    Codegen.generate(".globl main");
 	    Codegen.genLabel("main");
 	}
 	else {
@@ -577,8 +590,22 @@ class FctnDeclNode extends DeclNode {
     private void prologueGen() {
 	Codegen.genPush("$ra"); // Push return addr
 	Codegen.genPush("$fp"); // Push frame pointer
-	Codegen.generate("addu", "$fp", "8"); // Update fp to be right after saved AR data
+	Codegen.generate("addu", "$fp","$sp", "8"); // Update fp to be right after saved AR data
 	Codegen.generate("subu", "$sp", "$sp", String.valueOf(myId.localsSize())); // Space for locals
+    }
+
+    private void epilogueGen() {
+	Codegen.genLabel("_" + myId.name() + "_Exit");
+	Codegen.generateIndexed("lw", "$ra", "$fp", 0); // restore ret addr
+	Codegen.generate("move", "$t0", "$fp"); // Storing fp to update sp later
+	Codegen.generateIndexed("lw", "$fp", "$fp", -4); // Restore fp
+	Codegen.generateWithComment("move","Restoring stack pointer", "$sp", "$t0"); // Restore sp
+
+	// Exiting Main
+	if(myId.name().equals("main")) {
+	    Codegen.generateWithComment("li", "Exiting main", "$v0", "10");
+	    Codegen.generate("syscall");
+	}
 	
     }
     
