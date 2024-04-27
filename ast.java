@@ -196,13 +196,13 @@ class DeclListNode extends ASTnode {
      * typeCheck
      ***/
     public void typeCheck() {
-	Codegen.generate(".data");
         for (DeclNode node : myDecls) {
             node.typeCheck();
         }
     }
 
     public void codeGen() {
+	Codegen.generate(".data");
 	for(DeclNode node : myDecls) {
 	    node.codeGen();
 	}
@@ -390,9 +390,6 @@ class FctnBodyNode extends ASTnode {
     }
 
     public void codeGen() {
-	Codegen.generate(".data");
-	myDeclList.codeGen();
-	Codegen.generate(".text");
 	myStmtList.codeGen();
     }
     
@@ -533,11 +530,6 @@ class VarDeclNode extends DeclNode {
 
 	    // Initialize with zero val
 	    Codegen.generateLabeled("_" + myId.name(),".word", "Global for " + myId.name(), "0"); 
-	}
-
-	// Local var decl
-	else {
-	    
 	}
     }
 

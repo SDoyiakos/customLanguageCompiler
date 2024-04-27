@@ -1,4 +1,7 @@
 integer x.
 logical y.
 
-void main {} []
+void main {} [
+    integer x.
+    integer y.
+]
