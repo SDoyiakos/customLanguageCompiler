@@ -150,7 +150,7 @@ class ProgramNode extends ASTnode {
      * codeGen
      ***/
     public void codeGen() {
-        // TODO: complete this
+        myDeclList.codeGen();
     }
 
     public void unparse(PrintWriter p, int indent) {
@@ -196,9 +196,16 @@ class DeclListNode extends ASTnode {
      * typeCheck
      ***/
     public void typeCheck() {
+	Codegen.generate(".data");
         for (DeclNode node : myDecls) {
             node.typeCheck();
         }
+    }
+
+    public void codeGen() {
+	for(DeclNode node : myDecls) {
+	    node.codeGen();
+	}
     }
 
     public void unparse(PrintWriter p, int indent) {
@@ -401,6 +408,8 @@ abstract class DeclNode extends ASTnode {
 
     // default version of typeCheck for non-function decls
     public void typeCheck() { }
+
+    public void codeGen() {}
 }
 
 class VarDeclNode extends DeclNode {
@@ -504,7 +513,22 @@ class VarDeclNode extends DeclNode {
         }
         
         return sym;
-    } 
+    }
+
+    public void codeGen() {
+
+	// Global var decl
+	if(myId.sym().isGlobal()) {
+
+	    // Initialize with zero val
+	    Codegen.generateLabeled("_" + myId.name(),".word", "Global for " + myId.name(), "0"); 
+	}
+
+	// Local var decl
+	else {
+	    
+	}
+    }
 
     public void unparse(PrintWriter p, int indent) {
         doIndent(p, indent);
