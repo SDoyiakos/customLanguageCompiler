@@ -1625,9 +1625,15 @@ class IdNode extends ExpNode {
         return (myStrVal.equals("main"));
     }
 
-    public void codeGen() {
-	Codegen.generate("move", Codegen.T0, Codegen.FP);
-	Codegen.generate("add", Codegen.T0, Codegen.T0, String.valueOf(sym().getOffset()));
+    public void pushVal() {
+	Codegen.generate("li", Codegen.T0, myStrVal);
+	Codegen.genPush(Codegen.T0);
+    }
+
+    public void pushLoc() {
+	Codegen.generate("lw", Codegen.T0, Codegen.FP); // First storing the FP
+	Codegen.generate("li", Codegen.T1, sym().getOffset()); // Load offset into T1
+	Codegen.generate("add", Codegen.T0, Codegen.T0, Codegen.T1); // Calculating location
 	Codegen.genPush(Codegen.T0);
     }
 
