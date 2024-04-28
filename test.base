@@ -5,4 +5,8 @@ void main {} [
     write << "Hello World\n".
     write << 5.
     write << "\n".
+    write << True.
+    write << "\n".
+    write << False.
+    write << "\n".
 ]

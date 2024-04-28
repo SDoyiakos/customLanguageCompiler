@@ -1352,6 +1352,12 @@ class WriteStmtNode extends StmtNode {
 	    Codegen.generateWithComment("li", "Syscall to print str code", Codegen.V0, "4");
 	    Codegen.generate("syscall");
 	}
+	else if (myType.isLogicalType()) {
+	    myExp.codeGen(); // Will push logical val to stack
+	    Codegen.genPop(Codegen.A0);
+	    Codegen.generateWithComment("li", "Syscall to print logical(0,1) code", Codegen.V0, "1");
+	    Codegen.generate("syscall");
+	}
     }
          
     public void unparse(PrintWriter p, int indent) {
