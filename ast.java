@@ -256,6 +256,7 @@ class StmtListNode extends ASTnode {
     }
 
     public void codeGen() {
+	Codegen.generate(".text");
 	for(StmtNode node : myStmts) {
 	    node.codeGen();
 	}
@@ -969,6 +970,7 @@ class AssignStmtNode extends StmtNode {
 
     public void codeGen() {
 	myAssign.codeGen();
+	Codegen.genPop(Codegen.T1); // Popping that final val
     }
 
     // 1 child
@@ -1337,6 +1339,15 @@ class WriteStmtNode extends StmtNode {
                          "Write attempt of void");
         }
     }
+
+    public void codeGen() {
+	if (myType.isIntegerType()) {
+	    myExp.codeGen(); // Will push the integer to the top of the stack
+	    Codegen.genPop(Codegen.A0); // Pop int into special reg
+	    Codegen.generateWithComment("li", "Syscall to print int code", Codegen.V0, "1");
+	    Codegen.generate("syscall");
+	}
+    }
          
     public void unparse(PrintWriter p, int indent) {
         doIndent(p, indent);
@@ -1477,7 +1488,12 @@ class TrueNode extends ExpNode {
     public Type typeCheck() {
         return new LogicalType();
     }
-     
+    
+    public void codeGen() {                                                 
+        Codegen.generateWithComment("li", "False literal", Codegen.T0, "1");
+        Codegen.genPush(Codegen.T0);                                        
+    }
+    
     public void unparse(PrintWriter p, int indent) {
         p.print("True");
     }
@@ -1511,6 +1527,11 @@ class FalseNode extends ExpNode {
      ***/
     public Type typeCheck() {
         return new LogicalType();
+    }
+
+    public void codeGen() {
+	Codegen.generateWithComment("li", "False literal", Codegen.T0, "0");
+	Codegen.genPush(Codegen.T0);
     }
         
     public void unparse(PrintWriter p, int indent) {
@@ -1591,7 +1612,13 @@ class IdNode extends ExpNode {
      ***/
     public boolean isMain() {
         return (myStrVal.equals("main"));
-    } 
+    }
+
+    public void codeGen() {
+	Codegen.generate("move", Codegen.T0, Codegen.FP);
+	Codegen.generate("add", Codegen.T0, Codegen.T0, String.valueOf(sym().getOffset()));
+	Codegen.genPush(Codegen.T0);
+    }
 
     /***
      * nameAnalysis
@@ -1916,7 +1943,13 @@ class AssignExpNode extends ExpNode {
     }
 
     public void codeGen() {
-	
+	Codegen.generateWithComment("", "Assignment");
+	myLhs.codeGen();
+	myExp.codeGen();
+	Codegen.genPop(Codegen.T1);
+	Codegen.genPop(Codegen.T0);
+	Codegen.generateIndexed("sw", Codegen.T1, Codegen.T0, 0);
+	Codegen.genPush(Codegen.T1);
     }
   
     /***
