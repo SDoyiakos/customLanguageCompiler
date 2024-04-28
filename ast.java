@@ -256,7 +256,9 @@ class StmtListNode extends ASTnode {
     }
 
     public void codeGen() {
-	
+	for(StmtNode node : myStmts) {
+	    node.codeGen();
+	}
     }
 
     // list of children (StmtNodes)
@@ -936,6 +938,7 @@ class TupleNode extends TypeNode {
 abstract class StmtNode extends ASTnode {
     abstract public void nameAnalysis(SymTable symTab);
     abstract public void typeCheck(Type retType);
+    public void codeGen() {}
 }
 
 class AssignStmtNode extends StmtNode {
@@ -962,6 +965,10 @@ class AssignStmtNode extends StmtNode {
         doIndent(p, indent);
         myAssign.unparse(p, -1); // no parentheses
         p.println(".");
+    }
+
+    public void codeGen() {
+	myAssign.codeGen();
     }
 
     // 1 child
@@ -1438,7 +1445,7 @@ abstract class ExpNode extends ASTnode {
      * Default version for nodes with no names
      ***/
     public void nameAnalysis(SymTable symTab) { }
-        
+    public void codeGen() {}
     abstract public Type typeCheck();
     abstract public int lineNum();
     abstract public int charNum();
@@ -1661,6 +1668,11 @@ class IntLitNode extends ExpNode {
     public Type typeCheck() {
         return new IntegerType();
     }
+
+    public void codeGen() {
+	Codegen.generateWithComment("li", "Loading integer literal", Codegen.T0, String.valueOf(myIntVal));
+	Codegen.genPush(Codegen.T0);
+    }
     
     public void unparse(PrintWriter p, int indent) {
         p.print(myIntVal);
@@ -1697,6 +1709,11 @@ class StrLitNode extends ExpNode {
      ***/
     public Type typeCheck() {
         return new StringType();
+    }
+
+    public void codeGen() {
+	Codegen.generate(".data");
+	Codegen.generateLabeled(Codegen.nextLabel(), ".asciiz", myStrVal, "String Literal");
     }
         
     public void unparse(PrintWriter p, int indent) {
@@ -1896,6 +1913,10 @@ class AssignExpNode extends ExpNode {
         p.print(" = ");
         myExp.unparse(p, 0);
         if (indent != -1)  p.print(")");    
+    }
+
+    public void codeGen() {
+	
     }
   
     /***
