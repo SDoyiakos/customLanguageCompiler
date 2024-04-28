@@ -2,7 +2,10 @@ integer x.
 logical y.
 
 void main {} [
-    write << "Hello World\n".
+    integer x.
+    x = 10.
+    write << x.
+    write << "\nHello World\n".
     write << 5.
     write << "\n".
     write << True.

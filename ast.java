@@ -969,6 +969,8 @@ class AssignStmtNode extends StmtNode {
     }
 
     public void codeGen() {
+	myAssign.codeGen();
+	Codegen.genPop(Codegen.T0); // Must pop afterwards
     }
 
     // 1 child
@@ -1625,13 +1627,17 @@ class IdNode extends ExpNode {
         return (myStrVal.equals("main"));
     }
 
+    public void codeGen() {
+	pushVal();
+    }
+    
     public void pushVal() {
-	Codegen.generate("li", Codegen.T0, myStrVal);
+	Codegen.generateIndexed("lw", Codegen.T0, Codegen.FP, sym().getOffset());
 	Codegen.genPush(Codegen.T0);
     }
 
     public void pushLoc() {
-	Codegen.generate("lw", Codegen.T0, Codegen.FP); // First storing the FP
+	Codegen.generate("move", Codegen.T0, Codegen.FP); // First storing the FP
 	Codegen.generate("li", Codegen.T1, sym().getOffset()); // Load offset into T1
 	Codegen.generate("add", Codegen.T0, Codegen.T0, Codegen.T1); // Calculating location
 	Codegen.genPush(Codegen.T0);
@@ -1967,7 +1973,13 @@ class AssignExpNode extends ExpNode {
     }
 
     public void codeGen() {
-	
+	IdNode leftSide = ((IdNode)myLhs);
+	myExp.codeGen(); // Push rhs onto stack
+	leftSide.pushLoc();
+	Codegen.genPop(Codegen.T1);  // Pop location into T1 	
+	Codegen.genPop(Codegen.T0); // Pop rhs val into T0 reg
+	Codegen.generateIndexed("sw", Codegen.T0, Codegen.T1, 0, "Store value int " + leftSide.name()); // Store val at T1 loc
+	Codegen.genPush(Codegen.T0); // Push val on stack for cascading calls
     }
   
     /***
