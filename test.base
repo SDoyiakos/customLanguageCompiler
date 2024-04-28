@@ -2,6 +2,7 @@ integer x.
 logical y.
 
 void main {} [
-    integer x.
-    integer y.
+    write << "Hello World\n".
+    write << 5.
+    write << "\n".
 ]

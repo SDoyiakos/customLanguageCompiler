@@ -969,8 +969,6 @@ class AssignStmtNode extends StmtNode {
     }
 
     public void codeGen() {
-	myAssign.codeGen();
-	Codegen.genPop(Codegen.T1); // Popping that final val
     }
 
     // 1 child
@@ -1345,6 +1343,13 @@ class WriteStmtNode extends StmtNode {
 	    myExp.codeGen(); // Will push the integer to the top of the stack
 	    Codegen.genPop(Codegen.A0); // Pop int into special reg
 	    Codegen.generateWithComment("li", "Syscall to print int code", Codegen.V0, "1");
+	    Codegen.generate("syscall");
+	}
+	else if (myType.isStringType()) {
+	    StrLitNode strExp = ((StrLitNode)myExp); // Safetly downcast
+	    strExp.codeGen();
+	    Codegen.generateWithComment("la", "Loading addr of str literal", Codegen.A0, strExp.getLabel());
+	    Codegen.generateWithComment("li", "Syscall to print str code", Codegen.V0, "4");
 	    Codegen.generate("syscall");
 	}
     }
@@ -1740,13 +1745,20 @@ class StrLitNode extends ExpNode {
 
     public void codeGen() {
 	Codegen.generate(".data");
-	Codegen.generateLabeled(Codegen.nextLabel(), ".asciiz", myStrVal, "String Literal");
+	myLabel = Codegen.nextLabel(); // Generate label for this literal
+	Codegen.generateLabeled(myLabel, ".asciiz", "String Literal" , myStrVal);
+	Codegen.generate(".text");
+    }
+
+    public String getLabel() {
+	return myLabel;
     }
         
     public void unparse(PrintWriter p, int indent) {
         p.print(myStrVal);
     }
 
+    private String myLabel;
     private int myLineNum;
     private int myCharNum;
     private String myStrVal;
@@ -1943,13 +1955,7 @@ class AssignExpNode extends ExpNode {
     }
 
     public void codeGen() {
-	Codegen.generateWithComment("", "Assignment");
-	myLhs.codeGen();
-	myExp.codeGen();
-	Codegen.genPop(Codegen.T1);
-	Codegen.genPop(Codegen.T0);
-	Codegen.generateIndexed("sw", Codegen.T1, Codegen.T0, 0);
-	Codegen.genPush(Codegen.T1);
+	
     }
   
     /***
