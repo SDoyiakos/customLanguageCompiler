@@ -981,6 +981,18 @@ class PostIncStmtNode extends StmtNode {
     public PostIncStmtNode(ExpNode exp) {
         myExp = exp;
     }
+
+
+    public void codeGen() {
+	IdNode myId = ((IdNode) myExp);                                
+	myId.pushLoc(); // Push var location onto stack                
+	myId.pushVal(); // Push var value on stack                     
+	                                                               
+	Codegen.genPop(Codegen.T0); // Popping the value into reg T0   
+	Codegen.genPop(Codegen.T1); // Popping the location into reg T1
+	Codegen.generate("addi", Codegen.T0, Codegen.T0, 1);          
+	Codegen.generateIndexed("sw", Codegen.T0, Codegen.T1, 0);      
+    }
     
     /***
      * nameAnalysis
@@ -1023,6 +1035,18 @@ class PostDecStmtNode extends StmtNode {
      ***/
     public void nameAnalysis(SymTable symTab) {
         myExp.nameAnalysis(symTab);
+    }
+
+    public void codeGen() {
+	IdNode myId = ((IdNode) myExp);
+	myId.pushLoc(); // Push var location onto stack
+	myId.pushVal(); // Push var value on stack
+
+	Codegen.genPop(Codegen.T0); // Popping the value into reg T0
+	Codegen.genPop(Codegen.T1); // Popping the location into reg T1
+	Codegen.generate("addi", Codegen.T0, Codegen.T0, -1);
+	Codegen.generateIndexed("sw", Codegen.T0, Codegen.T1, 0);
+	
     }
     
     /***
