@@ -1,12 +1,14 @@
 integer x.
 logical y.
-
+integer z.
 void main {} [
     integer x.
     x = 10.
+    z = 5.
     y = True.
     write << y.
     write << "\n".
+    x = z.
     write << x.
     write << "\nHello World\n".
     write << 5.
