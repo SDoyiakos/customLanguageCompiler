@@ -2216,6 +2216,16 @@ class NotNode extends UnaryExpNode {
         return retType;
     }
 
+    public void codeGen() {
+	myExp.codeGen();
+	Codegen.genPop(Codegen.T0);
+	Codegen.generate("li", Codegen.T1, "-1"); 
+	Codegen.generate("mult", Codegen.T0, Codegen.T1); // Multiply logical by -1
+	Codegen.generate("mflo", Codegen.T0);
+	Codegen.generate("addi", Codegen.T0, Codegen.T0, "1"); // Add 1 to logical
+	Codegen.genPush(Codegen.T0); // Push val 
+    }
+
     public void unparse(PrintWriter p, int indent) {
         p.print("(~");
         myExp.unparse(p, 0);
