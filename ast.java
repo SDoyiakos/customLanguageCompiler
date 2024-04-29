@@ -2248,6 +2248,15 @@ class UnaryMinusNode extends UnaryExpNode {
         return retType;
     }
 
+    public void codeGen() {
+	myExp.codeGen(); // Push exp onto stack
+	Codegen.genPop(Codegen.T0); // Pop exp into T0
+	Codegen.generate("li", Codegen.T1, -1); // Load negative 1 into T1
+	Codegen.generate("mult", Codegen.T0, Codegen.T1); // Perform mult
+	Codegen.generate("mflo", Codegen.T0);
+	Codegen.genPush(Codegen.T0);
+    }
+
     public void unparse(PrintWriter p, int indent) {
         p.print("(-");
         myExp.unparse(p, 0);
