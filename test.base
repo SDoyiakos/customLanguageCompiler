@@ -4,6 +4,9 @@ logical y.
 void main {} [
     integer x.
     x = 10.
+    y = True.
+    write << y.
+    write << "\n".
     write << x.
     write << "\nHello World\n".
     write << 5.

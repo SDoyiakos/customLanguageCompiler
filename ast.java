@@ -1632,15 +1632,31 @@ class IdNode extends ExpNode {
     }
     
     public void pushVal() {
-	Codegen.generateIndexed("lw", Codegen.T0, Codegen.FP, sym().getOffset());
-	Codegen.genPush(Codegen.T0);
+
+	// Local vars or params
+	if(!sym().isGlobal()) {
+	    Codegen.generateIndexed("lw", Codegen.T0, Codegen.FP, sym().getOffset());
+	    Codegen.genPush(Codegen.T0);
+	}
+	else if(sym().isGlobal()) {
+	    Codegen.generate("la", Codegen.T0, "_" + myStrVal);
+	    Codegen.generateIndexed("lw", Codegen.T1, Codegen.T0, 0, "Loading value of _" + myStrVal + " global");
+	    Codegen.genPush(Codegen.T1);
+	}
     }
 
     public void pushLoc() {
-	Codegen.generate("move", Codegen.T0, Codegen.FP); // First storing the FP
-	Codegen.generate("li", Codegen.T1, sym().getOffset()); // Load offset into T1
-	Codegen.generate("add", Codegen.T0, Codegen.T0, Codegen.T1); // Calculating location
-	Codegen.genPush(Codegen.T0);
+
+	if(!sym().isGlobal()) {
+	    Codegen.generate("move", Codegen.T0, Codegen.FP); // First storing the FP
+	    Codegen.generate("li", Codegen.T1, sym().getOffset()); // Load offset into T1
+	    Codegen.generate("add", Codegen.T0, Codegen.T0, Codegen.T1); // Calculating location
+	    Codegen.genPush(Codegen.T0);
+	}
+	else if(sym().isGlobal()) {
+	    Codegen.generateWithComment("la", "Loading global loc of _" + myStrVal, Codegen.T0, "_" + myStrVal);
+	    Codegen.genPush(Codegen.T0);
+	}
     }
 
     /***
@@ -1720,7 +1736,7 @@ class IntLitNode extends ExpNode {
     }
 
     public void codeGen() {
-	Codegen.generateWithComment("li", "Loading integer literal", Codegen.T0, String.valueOf(myIntVal));
+	Codegen.generateWithComment("li", "Loading literal", Codegen.T0, String.valueOf(myIntVal));
 	Codegen.genPush(Codegen.T0);
     }
     
