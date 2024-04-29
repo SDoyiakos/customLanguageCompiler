@@ -2421,6 +2421,21 @@ class PlusNode extends ArithmeticExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    public void codeGen() {
+
+	// Push both values on the stack
+	myExp2.codeGen();
+	myExp1.codeGen();
+
+	Codegen.genPop(Codegen.T0); // Pop lhs
+	Codegen.genPop(Codegen.T1); // pop rhs
+
+	// Storing sum in T0 and then pushing T0
+	Codegen.generateWithComment("add", "Sum up lhs and rhs", Codegen.T0, Codegen.T0, Codegen.T1);
+	Codegen.genPush(Codegen.T0);
+	
+    }
 }
 
 class MinusNode extends ArithmeticExpNode {
@@ -2434,6 +2449,18 @@ class MinusNode extends ArithmeticExpNode {
         p.print(" - ");
         myExp2.unparse(p, 0);
         p.print(")");
+    }
+
+    public void codeGen() {
+	myExp2.codeGen();
+	myExp1.codeGen();
+
+	Codegen.genPop(Codegen.T0); // pop lhs
+	Codegen.genPop(Codegen.T1); // pop rhs
+
+	// Storing difference in T0 and then pushing T0
+	Codegen.generateWithComment("sub", "Subtracting rhs from lhs", Codegen.T0, Codegen.T0, Codegen.T1);
+	Codegen.genPush(Codegen.T0);
     }
 }
 
