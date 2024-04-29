@@ -2476,6 +2476,20 @@ class TimesNode extends ArithmeticExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    public void codeGen() {
+	myExp2.codeGen();
+	myExp1.codeGen();
+
+	Codegen.genPop(Codegen.T0); // Pop lhs
+	Codegen.genPop(Codegen.T1); // Pop rhs
+
+	// Storing the product in T0 and then pushing T0
+	Codegen.generateWithComment("mult", "multiplying rhs and lhs", Codegen.T0, Codegen.T1);
+	Codegen.generate("mflo", Codegen.T0);
+	Codegen.genPush(Codegen.T0);
+	
+    }
 }
 
 class DivideNode extends ArithmeticExpNode {
@@ -2489,6 +2503,18 @@ class DivideNode extends ArithmeticExpNode {
         p.print(" / ");
         myExp2.unparse(p, 0);
         p.print(")");
+    }
+
+    public void codeGen() {
+	myExp2.codeGen();
+	myExp1.codeGen();
+
+	Codegen.genPop(Codegen.T0); // Pop lhs
+	Codegen.genPop(Codegen.T1); // Pop rhs
+
+	Codegen.generateWithComment("div", "divide rhs from lhs", Codegen.T0, Codegen.T1);
+	Codegen.generate("mflo", Codegen.T0);
+	Codegen.genPush(Codegen.T0);
     }
 }
 
