@@ -1441,6 +1441,8 @@ class CallStmtNode extends StmtNode {
 
     public void codeGen() {
 	myCall.codeGen();
+	Codegen.generateWithComment("", "Popping function call val");
+	Codegen.genPop(Codegen.T0);
     }
 
     // 1 child
@@ -1507,7 +1509,7 @@ class ReturnStmtNode extends StmtNode {
 	    Codegen.genPop(Codegen.V0);
 	}
 	
-	Codegen.generate("j", retLabel);
+	Codegen.generateWithComment("j", "Jumping to " + retLabel, retLabel);
     }
 
     
@@ -2049,7 +2051,7 @@ class AssignExpNode extends ExpNode {
 	leftSide.pushLoc();
 	Codegen.genPop(Codegen.T1);  // Pop location into T1 	
 	Codegen.genPop(Codegen.T0); // Pop rhs val into T0 reg
-	Codegen.generateIndexed("sw", Codegen.T0, Codegen.T1, 0, "Store value int " + leftSide.name()); // Store val at T1 loc
+	Codegen.generateIndexed("sw", Codegen.T0, Codegen.T1, 0, "Store value into " + leftSide.name()); // Store val at T1 loc
 	Codegen.genPush(Codegen.T0); // Push val on stack for cascading calls
     }
   
