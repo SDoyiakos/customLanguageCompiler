@@ -255,9 +255,13 @@ class StmtListNode extends ASTnode {
         } 
     }
 
-    public void codeGen() {
+    public void codeGen(String fctnName) {
 	Codegen.generate(".text");
 	for(StmtNode node : myStmts) {
+	    if(node instanceof ReturnStmtNode) {
+		ReturnStmtNode myRet = ((ReturnStmtNode) node);
+		myRet.codeGen(fctnName);
+	    }
 	    node.codeGen();
 	}
     }
@@ -400,8 +404,8 @@ class FctnBodyNode extends ASTnode {
         myStmtList.typeCheck(retType);
     }
 
-    public void codeGen() {
-	myStmtList.codeGen();
+    public void codeGen(String fctnName) {
+	myStmtList.codeGen(fctnName);
     }
     
     public void unparse(PrintWriter p, int indent) {
@@ -575,7 +579,7 @@ class FctnDeclNode extends DeclNode {
     public void codeGen() {
 	preambleGen();
 	prologueGen();
-	myBody.codeGen();
+	myBody.codeGen(myId.name());
 	epilogueGen();
     }
 
@@ -1495,6 +1499,18 @@ class ReturnStmtNode extends StmtNode {
         p.println(".");
     }
 
+    public void codeGen(String fctnName) {
+	String retLabel = "_" + fctnName + "_Exit";
+	if(myExp != null) {
+	    
+	    myExp.codeGen(); // Push retval on stack
+	    Codegen.genPop(Codegen.V0);
+	}
+	
+	Codegen.generate("j", retLabel);
+    }
+
+    
     // 1 child
     private ExpNode myExp; // possibly null
 }
