@@ -284,6 +284,14 @@ class ExpListNode extends ASTnode {
             node.nameAnalysis(symTab);
         }
     }
+
+    public void codeGen() {
+
+	// Push vals from right to left
+	for(int i = size() - 1; i >= 0;i--) {
+	    myExps.get(i).codeGen();
+	}
+    }
     
     /***
      * typeCheck
@@ -2134,7 +2142,7 @@ class CallExpNode extends ExpNode {
     }
 
     public void codeGen() {
-	//myExpList.codeGen(); // Pushing params onto stack
+	myExpList.codeGen(); // Pushing params onto stack
 	
 	Codegen.generate("jal", "_" + myId.name());
 	Codegen.genPush(Codegen.V0); // Retrieving retval
