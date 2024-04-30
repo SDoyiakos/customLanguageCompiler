@@ -595,22 +595,22 @@ class FctnDeclNode extends DeclNode {
     }
 
     private void prologueGen() {
-	Codegen.genPush("$ra"); // Push return addr
-	Codegen.genPush("$fp"); // Push frame pointer
-	Codegen.generate("addu", "$fp","$sp", "8"); // Update fp to be right after saved AR data
-	Codegen.generate("subu", "$sp", "$sp", String.valueOf(myId.localsSize())); // Space for locals
+	Codegen.genPush(Codegen.RA); // Push return addr
+	Codegen.genPush(Codegen.FP); // Push frame pointer
+	Codegen.generate("addu", Codegen.FP, Codegen.SP, "8"); // Update fp to be right after saved AR data
+	Codegen.generate("subu", Codegen.SP, Codegen.SP, String.valueOf(myId.localsSize())); // Space for locals
     }
 
     private void epilogueGen() {
 	Codegen.genLabel("_" + myId.name() + "_Exit");
-	Codegen.generateIndexed("lw", "$ra", "$fp", 0); // restore ret addr
-	Codegen.generate("move", "$t0", "$fp"); // Storing fp to update sp later
-	Codegen.generateIndexed("lw", "$fp", "$fp", -4); // Restore fp
-	Codegen.generateWithComment("move","Restoring stack pointer", "$sp", "$t0"); // Restore sp
+	Codegen.generateIndexed("lw", Codegen.RA, Codegen.FP, 0); // restore ret addr
+	Codegen.generate("move", Codegen.T0, Codegen.FP); // Storing fp to update sp later
+	Codegen.generateIndexed("lw", Codegen.FP, Codegen.FP, -4); // Restore fp
+	Codegen.generateWithComment("move","Restoring stack pointer", Codegen.SP, Codegen.T0); // Restore sp
 
 	// Exiting Main
 	if(myId.name().equals("main")) {
-	    Codegen.generateWithComment("li", "Exiting main", "$v0", "10");
+	    Codegen.generateWithComment("li", "Exiting main", Codegen.V0, "10");
 	    Codegen.generate("syscall");
 	}
 	else {
@@ -1326,7 +1326,28 @@ class ReadStmtNode extends StmtNode {
                          "Read attempt of tuple variable");
         }
     }
-      
+
+    public void codeGen() {
+	IdNode myLoc = ((IdNode) myExp);
+
+	// Load the location being read to
+	myLoc.pushLoc();
+	Codegen.genPop(Codegen.T0);
+	
+	if(myLoc.sym().getType().isIntegerType()) {
+	    Codegen.generateWithComment("li", "Reading integer", Codegen.V0, "5");
+	}
+	else if(myLoc.sym().getType().isLogicalType()) {
+	    Codegen.generateWithComment("li", "Reading logical", Codegen.V0, "5");
+	}
+	
+	Codegen.generate("syscall");
+	
+	Codegen.generateIndexed("sw", Codegen.V0, Codegen.T0, 0); // Store val into location
+	
+    }
+
+    
     public void unparse(PrintWriter p, int indent) {
         doIndent(p, indent);
         p.print("read >> ");
