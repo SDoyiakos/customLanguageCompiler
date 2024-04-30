@@ -601,6 +601,9 @@ class FctnDeclNode extends DeclNode {
 	    Codegen.generateWithComment("li", "Exiting main", "$v0", "10");
 	    Codegen.generate("syscall");
 	}
+	else {
+	    Codegen.generateWithComment("jr", "Exiting function " + myId.name(), Codegen.RA);
+	}
 	
     }
     
@@ -1424,6 +1427,10 @@ class CallStmtNode extends StmtNode {
         p.println(".");
     }
 
+    public void codeGen() {
+	myCall.codeGen();
+    }
+
     // 1 child
     private CallExpNode myCall;
 }
@@ -2124,6 +2131,13 @@ class CallExpNode extends ExpNode {
         
         myExpList.typeCheck(fctnSym.getParamTypes());
         return fctnSym.getReturnType();
+    }
+
+    public void codeGen() {
+	//myExpList.codeGen(); // Pushing params onto stack
+	
+	Codegen.generate("jal", "_" + myId.name());
+	Codegen.genPush(Codegen.V0); // Retrieving retval
     }
          
     // **** unparse ****
