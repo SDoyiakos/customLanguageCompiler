@@ -1527,7 +1527,7 @@ class ReturnStmtNode extends StmtNode {
 	if(myExp != null) {
 	    
 	    myExp.codeGen(); // Push retval on stack
-	    Codegen.genPop(Codegen.V0);
+	    Codegen.genPop(Codegen.V0); // Load retval into V0
 	}
 	
 	Codegen.generateWithComment("j", "Jumping to " + retLabel, retLabel);
@@ -2184,6 +2184,8 @@ class CallExpNode extends ExpNode {
 	myExpList.codeGen(); // Pushing params onto stack
 	
 	Codegen.generate("jal", "_" + myId.name());
+	Codegen.generateWithComment("addi", "Removing function call params", Codegen.SP, Codegen.SP
+				    , String.valueOf(myExpList.size() * 4)); // Get rid of params
 	Codegen.genPush(Codegen.V0); // Retrieving retval
     }
          
