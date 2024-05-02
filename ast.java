@@ -11,7 +11,7 @@ import java.util.*;
 //
 // The nodes for literals and identifiers contain line and character 
 // number information; for string literals and identifiers, they also 
-// contain a string; for integer literals, they also contain an integer 
+// contain a string; for integxer literals, they also contain an integer 
 // value.
 //
 // Here are all the different kinds of AST nodes and what kinds of 
@@ -253,6 +253,9 @@ class StmtListNode extends ASTnode {
         while (it.hasNext()) {
             it.next().unparse(p, indent);
         } 
+    }
+
+    public void codeGen() {
     }
 
     public void codeGen(String fctnName) {
@@ -1140,6 +1143,16 @@ class IfStmtNode extends StmtNode {
         p.println("]");  
     }
 
+    public void codeGen() {
+        String falseLabel = Codegen.nextLabel();
+        myExp.codeGen();
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("beq", Codegen.T0, Codegen.FALSE, falseLabel);
+        myStmtList.codeGen();
+        Codegen.genLabel(falseLabel);
+      }
+     
+
     // 3 children
     private ExpNode myExp;
     private DeclListNode myDeclList;
@@ -1548,9 +1561,11 @@ abstract class ExpNode extends ASTnode {
      ***/
     public void nameAnalysis(SymTable symTab) { }
     public void codeGen() {}
+
     abstract public Type typeCheck();
     abstract public int lineNum();
     abstract public int charNum();
+    public void genJumpCode(String trueLab, String falseLab) {};
 }
 
 class TrueNode extends ExpNode {
@@ -2636,6 +2651,25 @@ class EqualsNode extends EqualityExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    public void codeGen() {
+		myExp1.codeGen();
+		myExp2.codeGen();
+		Codegen.genPop(Codegen.T1);
+		Codegen.genPop(Codegen.T0);
+		Codegen.generate("seq", Codegen.T0, Codegen.T0, Codegen.T1);
+		Codegen.genPush(Codegen.T0);
+		
+	}
+	
+	public void genJumpCode (String trueLab, String falseLab) {
+		myExp1.codeGen();
+		myExp2.codeGen();
+		Codegen.genPop(Codegen.T1);
+		Codegen.genPop(Codegen.T0);
+		Codegen.generate("beq", Codegen.T0, Codegen.T1, trueLab);
+		Codegen.generate("b", falseLab);
+	}
 }
 
 class NotEqualsNode extends EqualityExpNode {
@@ -2719,6 +2753,27 @@ class AndNode extends LogicalExpNode {
         p.print(" & ");
         myExp2.unparse(p, 0);
         p.print(")");
+    }
+
+	@Override
+	public void codeGen() {
+		String andEndLabel = Codegen.nextLabel();		
+	    myExp1.codeGen();
+		Codegen.generateIndexed("lw", Codegen.T0, Codegen.SP, 4);
+		Codegen.generate("beq", Codegen.T0,"$zero", andEndLabel);
+	    myExp2.codeGen();
+        Codegen.genPop(Codegen.T1);
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("and",Codegen.T0, Codegen.T0, Codegen.T1);
+		Codegen.genPush(Codegen.T0);
+        Codegen.genLabel(andEndLabel);		
+	}
+
+    public void genJumpCode(String trueLab, String falseLab) {
+        String newLab = Codegen.nextLabel();
+        myExp1.genJumpCode(newLab, falseLab);
+        Codegen.genLabel(newLab);
+        myExp2.genJumpCode(trueLab, falseLab);
     }
 }
 
