@@ -2755,7 +2755,44 @@ class NotEqualsNode extends EqualityExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    public void codeGen() {	
+	if(myExp1 instanceof StrLitNode) {                                              
+	    String myStr1 = ((StrLitNode) myExp1).value();                              
+	    String myStr2 = ((StrLitNode) myExp2).value();                              
+                                                                                
+	    if(!myStr1.equals(myStr2)) {                                                 
+		Codegen.generateWithComment("li", "Unequal strings", Codegen.T0, "1");    
+	    }                                                                           
+	    else {                                                                      
+		Codegen.generateWithComment("li", "Equal strings", Codegen.T0, "0");  
+	    }                                                                           
+	    
+	    Codegen.genPush(Codegen.T0); // Pushing the equality solution onto stack    
+	}                                                                               
+	
+	else {
+
+	            myExp1.codeGen();                                    
+	            myExp2.codeGen();                                            
+	            Codegen.genPop(Codegen.T1);                                  
+	            Codegen.genPop(Codegen.T0);                                  
+	            Codegen.generate("sne", Codegen.T0, Codegen.T0, Codegen.T1); 
+	            Codegen.genPush(Codegen.T0);                                 
+	}
+    }
+	                                                                         
+    
+    public void genJumpCode (String trueLab, String falseLab) {          
+	myExp1.codeGen();                                            
+	myExp2.codeGen();                                            
+	Codegen.genPop(Codegen.T1);                                  
+	Codegen.genPop(Codegen.T0);                                  
+	Codegen.generate("bne", Codegen.T0, Codegen.T1, trueLab);    
+	Codegen.generate("b", falseLab);                             
+    }                                                                    
 }
+
 
 class GreaterNode extends EqualityExpNode {
     public GreaterNode(ExpNode exp1, ExpNode exp2) {
