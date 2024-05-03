@@ -1914,6 +1914,10 @@ class StrLitNode extends ExpNode {
     public int charNum() {
         return myCharNum;
     }
+
+    public String value() {
+	return myStrVal;
+    }
     
     /***
      * typeCheck
@@ -2705,14 +2709,29 @@ class EqualsNode extends EqualityExpNode {
     }
 
     public void codeGen() {
+	if(myExp1 instanceof StrLitNode) {
+	    String myStr1 = ((StrLitNode) myExp1).value();
+	    String myStr2 = ((StrLitNode) myExp2).value();
+
+	    if(myStr1.equals(myStr2)) {
+		Codegen.generateWithComment("li", "Equal strings", Codegen.T0, "1");
+	    }
+	    else {
+		Codegen.generateWithComment("li", "Unequal strings", Codegen.T0, "0");
+	    }
+
+	    Codegen.genPush(Codegen.T0); // Pushing the equality solution onto stack
+	}
+	else {
+	
 		myExp1.codeGen();
 		myExp2.codeGen();
 		Codegen.genPop(Codegen.T1);
 		Codegen.genPop(Codegen.T0);
 		Codegen.generate("seq", Codegen.T0, Codegen.T0, Codegen.T1);
 		Codegen.genPush(Codegen.T0);
-		
-	}
+	}	
+    }
 	
 	public void genJumpCode (String trueLab, String falseLab) {
 		myExp1.codeGen();
