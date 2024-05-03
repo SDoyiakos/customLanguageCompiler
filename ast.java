@@ -1149,7 +1149,7 @@ class IfStmtNode extends StmtNode {
         Codegen.genPop(Codegen.T0);
         Codegen.generate("beq", Codegen.T0, Codegen.FALSE, falseLab);
         myStmtList.codeGen();
-        // Not sure if i shd od a myDeclList.codeGen() ?
+        myDeclList.codeGen();
         Codegen.genLabel(falseLab); // Mark where to go if condition is false
     }
      
@@ -1245,11 +1245,15 @@ class IfElseStmtNode extends StmtNode {
         Codegen.genPop(Codegen.T0);
         Codegen.generate("beq", Codegen.T0, Codegen.FALSE, falseLab);
         // IF:
+        myThenDeclList.codeGen();
         myThenStmtList.codeGen();
         Codegen.generate("b", endLab); // Jump to the end after IF code is executed
+
         // ELSE:
         Codegen.genLabel(falseLab); // Mark beginning of else block
+        myElseDeclList.codeGen();
         myElseStmtList.codeGen();
+
         // Not sure if i shd od a myDeclList.codeGen() ?
         Codegen.genLabel(endLab); // Mark end of if-else block
     }
@@ -1325,6 +1329,7 @@ class WhileStmtNode extends StmtNode {
 		myExp.codeGen();
 		Codegen.genPop(Codegen.T0);
 		Codegen.generate("beq", Codegen.T0, "0", endLab); // break while if condition is false
+        myDeclList.codeGen();
 		myStmtList.codeGen();
 		Codegen.generate("b", loopLab); // jump back to start of loop
 
