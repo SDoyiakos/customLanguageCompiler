@@ -265,6 +265,21 @@ class StmtListNode extends ASTnode {
 		ReturnStmtNode myRet = ((ReturnStmtNode) node);
 		myRet.codeGen(fctnName);
 	    }
+	    else if(node instanceof IfStmtNode) {
+		IfStmtNode myIf = ((IfStmtNode) node);
+		myIf.codeGen(fctnName);
+	    }
+
+	    else if(node instanceof IfElseStmtNode) {
+		IfElseStmtNode myElse = ((IfElseStmtNode) node);
+		myElse.codeGen(fctnName);
+	    }
+	    else if(node instanceof WhileStmtNode) {
+		WhileStmtNode myWhile = ((WhileStmtNode) node);
+		myWhile.codeGen(fctnName);
+	    }
+	    
+	    
 	    node.codeGen();
 	}
     }
@@ -1143,13 +1158,13 @@ class IfStmtNode extends StmtNode {
         p.println("]");  
     }
 
-    public void codeGen() {
+    public void codeGen(String fctnName) {
         String falseLab = Codegen.nextLabel();
         myExp.codeGen();
         Codegen.genPop(Codegen.T0);
         Codegen.generate("beq", Codegen.T0, Codegen.FALSE, falseLab);
-        myStmtList.codeGen();
-        myDeclList.codeGen();
+	myDeclList.codeGen();
+        myStmtList.codeGen(fctnName);
         Codegen.genLabel(falseLab); // Mark where to go if condition is false
     }
      
@@ -1238,7 +1253,7 @@ class IfElseStmtNode extends StmtNode {
         p.println("]"); 
     }
 
-    public void codeGen() {
+    public void codeGen(String fctnName) {
         String falseLab = Codegen.nextLabel();
         String endLab = Codegen.nextLabel();
         myExp.codeGen();
@@ -1246,15 +1261,14 @@ class IfElseStmtNode extends StmtNode {
         Codegen.generate("beq", Codegen.T0, Codegen.FALSE, falseLab);
         // IF:
         myThenDeclList.codeGen();
-        myThenStmtList.codeGen();
+        myThenStmtList.codeGen(fctnName);
         Codegen.generate("b", endLab); // Jump to the end after IF code is executed
 
         // ELSE:
         Codegen.genLabel(falseLab); // Mark beginning of else block
         myElseDeclList.codeGen();
-        myElseStmtList.codeGen();
+        myElseStmtList.codeGen(fctnName);
 
-        // Not sure if i shd od a myDeclList.codeGen() ?
         Codegen.genLabel(endLab); // Mark end of if-else block
     }
 
@@ -1320,7 +1334,7 @@ class WhileStmtNode extends StmtNode {
         p.println("]");
     }
 
-	public void codeGen() {
+	public void codeGen(String fctnName) {
 		String loopLab = Codegen.nextLabel();
 		String endLab = Codegen.nextLabel();
 
@@ -1329,8 +1343,8 @@ class WhileStmtNode extends StmtNode {
 		myExp.codeGen();
 		Codegen.genPop(Codegen.T0);
 		Codegen.generate("beq", Codegen.T0, "0", endLab); // break while if condition is false
-        myDeclList.codeGen();
-		myStmtList.codeGen();
+		myDeclList.codeGen();
+		myStmtList.codeGen(fctnName);
 		Codegen.generate("b", loopLab); // jump back to start of loop
 
         // END OF LOOP //
@@ -2736,6 +2750,24 @@ class GreaterNode extends EqualityExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    public void codeGen() {
+	myExp2.codeGen(); // Push second expr
+	myExp1.codeGen(); // Push first expr
+	Codegen.genPop(Codegen.T0); // First in T0
+	Codegen.genPop(Codegen.T1); // Second in T1
+	
+	String greaterLabel = Codegen.nextLabel();
+	String afterLabel = Codegen.nextLabel();
+
+	Codegen.generateWithComment("bgt", "Greater than evaluation", Codegen.T0, Codegen.T1, greaterLabel);
+	Codegen.generate("li", Codegen.T0, Codegen.FALSE); // Load false into T0
+	Codegen.generate("b", afterLabel);
+	Codegen.genLabel(greaterLabel);
+	Codegen.generate("li", Codegen.T0, Codegen.TRUE); // Load true into T0
+	Codegen.genLabel(afterLabel);
+	Codegen.genPush(Codegen.T0);
+    }
 }
 
 class GreaterEqNode extends EqualityExpNode {
@@ -2750,6 +2782,25 @@ class GreaterEqNode extends EqualityExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    public void codeGen() {
+	myExp2.codeGen(); // Push second expr                                                                
+	myExp1.codeGen(); // Push first expr                                                                 
+	Codegen.genPop(Codegen.T0); // First in T0                                                           
+	Codegen.genPop(Codegen.T1); // Second in T1                                                          
+	                                                                                                     
+	String greaterLabel = Codegen.nextLabel();                                                           
+	String afterLabel = Codegen.nextLabel();                                                             
+	                                                                                                     
+	Codegen.generateWithComment("bge", "Greater equals evaluation", Codegen.T0, Codegen.T1, greaterLabel); 
+	Codegen.generate("li", Codegen.T0, Codegen.FALSE); // Load false into T0                             
+	Codegen.generate("b", afterLabel);                                                                   
+	Codegen.genLabel(greaterLabel);                                                                      
+	Codegen.generate("li", Codegen.T0, Codegen.TRUE); // Load true into T0                               
+	Codegen.genLabel(afterLabel);                                                                        
+	Codegen.genPush(Codegen.T0);                                                                         
+
+    }    
 }
 
 class LessNode extends EqualityExpNode {
@@ -2763,6 +2814,24 @@ class LessNode extends EqualityExpNode {
         p.print(" < ");
         myExp2.unparse(p, 0);
         p.print(")");
+    }
+
+    public void codeGen() {
+	myExp2.codeGen(); // Push second expr                                                                
+	myExp1.codeGen(); // Push first expr                                                                 
+	Codegen.genPop(Codegen.T0); // First in T0                                                           
+	Codegen.genPop(Codegen.T1); // Second in T1                                                          
+	                                                                                                     
+	String greaterLabel = Codegen.nextLabel();                                                           
+	String afterLabel = Codegen.nextLabel();                                                             
+	                                                                                                     
+	Codegen.generateWithComment("blt", "Less than evaluation", Codegen.T0, Codegen.T1, greaterLabel); 
+	Codegen.generate("li", Codegen.T0, Codegen.FALSE); // Load false into T0                             
+	Codegen.generate("b", afterLabel);                                                                   
+	Codegen.genLabel(greaterLabel);                                                                      
+	Codegen.generate("li", Codegen.T0, Codegen.TRUE); // Load true into T0                               
+	Codegen.genLabel(afterLabel);                                                                        
+	Codegen.genPush(Codegen.T0);                                                                         
     }
 }
 
@@ -2778,6 +2847,25 @@ class LessEqNode extends EqualityExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    public void codeGen() {
+	myExp2.codeGen(); // Push second expr                                                                
+	myExp1.codeGen(); // Push first expr                                                                 
+	Codegen.genPop(Codegen.T0); // First in T0                                                           
+	Codegen.genPop(Codegen.T1); // Second in T1                                                          
+	                                                                                                     
+	String greaterLabel = Codegen.nextLabel();                                                           
+	String afterLabel = Codegen.nextLabel();                                                             
+	                                                                                                     
+	Codegen.generateWithComment("ble", "Less than evaluation", Codegen.T0, Codegen.T1, greaterLabel); 
+	Codegen.generate("li", Codegen.T0, Codegen.FALSE); // Load false into T0                             
+	Codegen.generate("b", afterLabel);                                                                   
+	Codegen.genLabel(greaterLabel);                                                                      
+	Codegen.generate("li", Codegen.T0, Codegen.TRUE); // Load true into T0                               
+	Codegen.genLabel(afterLabel);                                                                        
+	Codegen.genPush(Codegen.T0);
+    }
+    
 }
 
 class AndNode extends LogicalExpNode {
