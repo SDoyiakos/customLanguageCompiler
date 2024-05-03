@@ -1144,13 +1144,14 @@ class IfStmtNode extends StmtNode {
     }
 
     public void codeGen() {
-        String falseLabel = Codegen.nextLabel();
+        String falseLab = Codegen.nextLabel();
         myExp.codeGen();
         Codegen.genPop(Codegen.T0);
-        Codegen.generate("beq", Codegen.T0, Codegen.FALSE, falseLabel);
+        Codegen.generate("beq", Codegen.T0, Codegen.FALSE, falseLab);
         myStmtList.codeGen();
-        Codegen.genLabel(falseLabel);
-      }
+        // Not sure if i shd od a myDeclList.codeGen() ?
+        Codegen.genLabel(falseLab); // Mark where to go if condition is false
+    }
      
 
     // 3 children
@@ -1237,6 +1238,22 @@ class IfElseStmtNode extends StmtNode {
         p.println("]"); 
     }
 
+    public void codeGen() {
+        String falseLab = Codegen.nextLabel();
+        String endLab = Codegen.nextLabel();
+        myExp.codeGen();
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("beq", Codegen.T0, Codegen.FALSE, falseLab);
+        // IF:
+        myThenStmtList.codeGen();
+        Codegen.generate("b", endLab); // Jump to the end after IF code is executed
+        // ELSE:
+        Codegen.genLabel(falseLab); // Mark beginning of else block
+        myElseStmtList.codeGen();
+        // Not sure if i shd od a myDeclList.codeGen() ?
+        Codegen.genLabel(endLab); // Mark end of if-else block
+    }
+
     // 5 children
     private ExpNode myExp;
     private DeclListNode myThenDeclList;
@@ -1298,6 +1315,22 @@ class WhileStmtNode extends StmtNode {
         doIndent(p, indent);
         p.println("]");
     }
+
+	public void codeGen() {
+		String loopLab = Codegen.nextLabel();
+		String endLab = Codegen.nextLabel();
+
+        // LOOP EXECUTION //
+		Codegen.genLabel(loopLab); // Mark top of while loop
+		myExp.codeGen();
+		Codegen.genPop(Codegen.T0);
+		Codegen.generate("beq", Codegen.T0, "0", endLab); // break while if condition is false
+		myStmtList.codeGen();
+		Codegen.generate("b", loopLab); // jump back to start of loop
+
+        // END OF LOOP //
+		Codegen.genLabel(endLab);
+	}
 
     // 3 children
     private ExpNode myExp;
@@ -2755,17 +2788,24 @@ class AndNode extends LogicalExpNode {
         p.print(")");
     }
 
-	@Override
 	public void codeGen() {
 		String andEndLabel = Codegen.nextLabel();		
-	    myExp1.codeGen();
+
+	    myExp1.codeGen(); // Eval LHS expression of &
 		Codegen.generateIndexed("lw", Codegen.T0, Codegen.SP, 4);
-		Codegen.generate("beq", Codegen.T0,"$zero", andEndLabel);
-	    myExp2.codeGen();
+
+        // IF LHS EVALUATES TO FALSE //
+		Codegen.generate("beq", Codegen.T0,"$zero", andEndLabel); // Skip to end
+
+        // IF LHS EVALUATES TO TRUE //
+	    myExp2.codeGen(); // Evaluate RHS expression of &
         Codegen.genPop(Codegen.T1);
         Codegen.genPop(Codegen.T0);
-        Codegen.generate("and",Codegen.T0, Codegen.T0, Codegen.T1);
-		Codegen.genPush(Codegen.T0);
+
+        // IF LHS AND RHS EVALUATES TO TRUE //
+        Codegen.generate("and",Codegen.T0, Codegen.T0, Codegen.T1); // Perform & operation
+		Codegen.genPush(Codegen.T0); // Save the & result back to stack
+
         Codegen.genLabel(andEndLabel);		
 	}
 
@@ -2789,4 +2829,33 @@ class OrNode extends LogicalExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    public void codeGen() {
+        String orEndLabel = Codegen.nextLabel();
+
+        myExp1.codeGen(); // Eval LHS expression of |
+        Codegen.generateIndexed("lw", Codegen.T0, Codegen.SP, 4);  // Load the result of myExp1
+
+        // IF LHS EVALUATES TO TRUE // 
+        Codegen.generate("bne", Codegen.T0, "$zero", orEndLabel);  // Skip myExp2
+    
+        // IF LHS EVALUATES TO FALSE //
+        myExp2.codeGen(); // Evaluate RHS expression of |
+        Codegen.genPop(Codegen.T1);               
+        Codegen.genPop(Codegen.T0);               
+        Codegen.generate("or", Codegen.T0, Codegen.T0, Codegen.T1);  // Perform | operation
+        Codegen.genPush(Codegen.T0); // Push the result of OR back onto the stack
+
+        Codegen.genLabel(orEndLabel);  
+    }
+    
+
+
+    public void genJumpCode(String trueLab, String falseLab) {
+		String newLab = Codegen.nextLabel();
+		myExp1.genJumpCode(trueLab, newLab);
+		Codegen.genLabel(newLab);
+		myExp2.genJumpCode(trueLab, falseLab);
+	}
+
 }
