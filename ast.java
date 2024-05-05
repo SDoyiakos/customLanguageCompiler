@@ -1648,7 +1648,7 @@ class TrueNode extends ExpNode {
     }
     
     public void codeGen() {                                                 
-        Codegen.generateWithComment("li", "False literal", Codegen.T0, "1");
+        Codegen.generateWithComment("li", "True literal", Codegen.T0, "1");
         Codegen.genPush(Codegen.T0);                                        
     }
     
